@@ -65,7 +65,8 @@ export const handler = (data, context, db, messaging) => {
                     drinkId: drink.id,
                     drinkPrice: drink.price,
                     drinkImage: drink.imageUrl,
-                    drinkName: drink.name
+                    drinkName: drink.name,
+                    lastUpdated: new Date().getTime()/1000
                 } },
             });
         })
@@ -85,7 +86,8 @@ export const handler = (data, context, db, messaging) => {
                         drinkId: drink.id,
                         drinkPrice: drink.price,
                         drinkImage: drink.imageUrl,
-                        drinkName: drink.name
+                        drinkName: drink.name,
+                        lastUpdated: new Date().getTime()/1000
                     } },
                 });
             })
@@ -100,6 +102,7 @@ export const handler = (data, context, db, messaging) => {
                 text: data.text,
                 drinkId: drink.id,
                 date: new Date().getTime()/1000,
+                lastUpdated: new Date().getTime()/1000
             };
 
             const newMessageDoc = db.collection(`conversations/${conversationId}/messages`).doc()
