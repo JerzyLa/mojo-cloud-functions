@@ -1,4 +1,4 @@
-import * as firebase from 'firebase';
+const firebase = require('firebase');
 
 const config = {
     apiKey: "AIzaSyDFnnKsggZqXDcZKHFjQGVd6PpnRiVicrw",
@@ -7,7 +7,7 @@ const config = {
     projectId: "mojodating-prealpha",
     storageBucket: "mojodating-prealpha.appspot.com",
     messagingSenderId: "617219767268"
-  };
+};
 
 firebase.initializeApp(config);
 
@@ -22,9 +22,11 @@ firebase.auth()
     .then(user => user.user.getIdToken())
     .then(token => {
         console.log('start execution');
-        const addMessage = firebase.functions().httpsCallable('sendConversationRequest');
-        addMessage({ uid: 'cYXmb8rvI2Q3S0vyc07SQP9upCo2', text: "haha", drinktypeid: "3oo5wRjJhBX9yH1yuhnw"}).then(function(result) {
+        const functionToTest = firebase.functions().httpsCallable('getUsers');
+        functionToTest().then(function (result) {
             console.log('result: ', result);
+            console.log(JSON.stringify(result.data.users.length));
+            console.log(JSON.stringify(result.data.users));
         })
         .catch(err => { console.log('inner error: ', err); });
     })

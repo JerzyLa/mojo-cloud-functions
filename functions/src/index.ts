@@ -12,6 +12,7 @@ import * as sendFeedbackFunction from './sendFeedback';
 import * as onInsideHouseTrigger from './onInsideHouse'
 import * as onMessageCreateTrigger from './onMessageCreate'
 import * as editUserDataFunction from './editUserData';
+import * as getUsers from './getUsers';
 import * as shortid from 'shortid';
 import { WEB3_PROVIDER_ADDRESS } from './config'
 
@@ -92,6 +93,10 @@ exports.myDrinks = functions.https.onCall((data, context) => {
 
 exports.buyDrink = functions.https.onCall((data, context) => {
     return buyDrink.handler(data, context, db, web3)
+})
+
+exports.getUsers = functions.https.onCall((data, context) => {
+    return getUsers.handler(data, context, db)
 })
 
 // Gets conversations of user (context.auth.uid) from real time database

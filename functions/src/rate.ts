@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions'
-import { HOUSE_ENTERANCE_THRESHOLD } from "./config";
+import { HOUSE_ENTERANCE_THRESHOLD, HOUSE_ENTERANCE_RATING_THESHOLD } from "./config";
 
 let checkIfRated
 
@@ -26,7 +26,8 @@ export const handler = (data, context, db) => {
                 const docData = doc.data();
                 const newBouncingLineRating = (docData.bouncingLineRating ? docData.bouncingLineRating : 0) + data.rate;
                 const newBouncingLineRatingCount = (docData.bouncingLineRatingCount ? docData.bouncingLineRatingCount : 0) + 1;
-                if (newBouncingLineRating >= HOUSE_ENTERANCE_THRESHOLD) {
+                if (newBouncingLineRatingCount >= HOUSE_ENTERANCE_THRESHOLD &&
+                    (newBouncingLineRating / newBouncingLineRatingCount) >= HOUSE_ENTERANCE_RATING_THESHOLD) {
                     return batch.update(userRef, {
                         bouncingLineRating: newBouncingLineRating,
                         bouncingLineRatingCount: newBouncingLineRatingCount,

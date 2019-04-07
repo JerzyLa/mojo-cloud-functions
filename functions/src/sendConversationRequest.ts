@@ -80,7 +80,9 @@ export const handler = (data, context, db, web3, messaging) => {
                     drinkId: drink.id,
                     drinkPrice: drink.price,
                     drinkImage: drink.imageUrl,
-                    drinkName: drink.name
+                    drinkName: drink.name,
+                    seen: false,
+                    lastUpdated: new Date().getTime(),
                 } },
             });
         })

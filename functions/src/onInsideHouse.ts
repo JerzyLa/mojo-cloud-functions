@@ -21,8 +21,8 @@ export const handler = (messaging, web3, change) => {
 
         const payload = {
             notification: {
-                title: "Welcome in Mojo House",
-                body: "Congratulations you've entered the Mojo House."
+                title: "Congratulations!",
+                body: "Your rating is higher than most active users. As a reward we want to give you free 50 Jo tokens!"
             }
         }
 
