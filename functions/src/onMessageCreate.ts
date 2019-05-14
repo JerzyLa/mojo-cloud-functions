@@ -1,3 +1,4 @@
+import * as util from './util'
 
 let acceptRequest
 
@@ -12,31 +13,39 @@ export const handler = (snapshot, context, db, messaging) => {
 
     const senderRef = db.collection('users').doc(sender)
     const receiverRef = db.collection('users').doc(receiver)
-    const payload = {
-        notification: {
-            title: "New message",
-            from: sender,
-            body: messageData.text
-        }
-    }
+    let fromUserData
 
-    return senderRef.get()
+        // add id to every message
+    return db.collection('conversations').doc(convId).collection('messages').doc(snapshot.id).update({id: snapshot.id})
+        .then(() => senderRef.get())
         // check if message accepts request if yes update database and send drink
         .then(doc => {
-            const docData = doc.data();
-            const requestSender = docData.conversations[convId].sender
-            if (requestSender !== sender && docData.conversations[convId].accepted === false) {
+            fromUserData = doc.data();
+            const requestSender = fromUserData.conversations[convId].sender
+            if (requestSender !== sender && fromUserData.conversations[convId].accepted === false) {
                 console.log('request is accepted')
                 return acceptRequest(sender, receiver, convId, db)
             }
             
             console.log('it is not message which accepts request')
         })
+        
+        // send notification message
         .then(() => receiverRef.get()
             .then(doc => {
+                const payload = {
+                    notification: {
+                        title: 'New message from ' + fromUserData.fullname,
+                        from: sender,
+                        body: util.truncateMessage(messageData.text),
+                        badge: '1',
+                        conversationId: convId,
+                    }
+                }
                 // for first message do not send message
                 if (messageData.drinkId === undefined) {
                     const toUserData = doc.data();
+                    console.log(`message: ${messageData.text} to token: ${toUserData.token}`)
                     return messaging.sendToDevice(toUserData.token, payload)
                 }
             })
@@ -66,6 +75,7 @@ acceptRequest = (fromUserId, toUserId, conversationId, db) => {
                     [conversationId]: {
                         ...docData.conversations[conversationId],
                     accepted: true,
+                    seen: true,
                     } 
                 },
             });
@@ -79,6 +89,7 @@ acceptRequest = (fromUserId, toUserId, conversationId, db) => {
                         [conversationId]: {
                             ...docData.conversations[conversationId],
                         accepted: true,
+                        seen: true,
                         } 
                     },
                 });

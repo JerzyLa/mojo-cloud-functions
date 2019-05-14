@@ -7,7 +7,7 @@ import {buyDrinkFor} from './buyDrinkFor'
 // context - Firebase https.onCall Context
 // rtdb - realtime database to use in function
 // db - firestore database to use in function
-export const handler = (data, context, db, web3, messaging) => {
+export const handler = (data, context, db, messaging) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
             'while authenticated.');
@@ -26,43 +26,27 @@ export const handler = (data, context, db, web3, messaging) => {
     const fromUserRef = db.collection('users').doc(fromUid)
     const toUserRef = db.collection('users').doc(toUid)
     let drink
-    let docData
-
-    // prepare message notification payload
-    const payload = {
-        notification: {
-            title: "Chat request",
-            from: fromUid,
-            body: data.text
-        }
-    }
-
-    // read env variables
-    const jotokenAddress = process.env.JOTOKEN_ADDRESS
-    const relayer = process.env.RELAYER_ADDRESS
-    const relayerPrivKey = process.env.RELAYER_PRIVATE_KEY
+    let fromUserData
     const batch = db.batch()
     
     // buy drink and send
     return fromUserRef.get()
         .then(doc => {
-            docData = doc.data()
-            console.log(docData.conversations)
-            if (docData.conversations) {
-                Object.keys(docData.conversations).forEach(function(key) {
-                    if (docData.conversations[key].receiver === toUid) {
+            fromUserData = doc.data()
+            console.log(fromUserData.conversations)
+            if (fromUserData.conversations) {
+                Object.keys(fromUserData.conversations).forEach(function(key) {
+                    if (fromUserData.conversations[key].receiver === toUid) {
                         throw new functions.https.HttpsError('failed-precondition', 'The conversation between ' +
                             'these users already exist.');
                     }
                 })
             }
-            return buyDrinkFor(db, web3, {
+
+            return buyDrinkFor(db, {
                 uid: fromUid,
                 receiver: toUid,
-                drinktypeid: data.drinktypeid,
-                jotokenAddress: jotokenAddress,
-                relayer: relayer,
-                relayerPrivKey: relayerPrivKey
+                drinktypeid: data.drinktypeid
             })
         })
 
@@ -71,7 +55,7 @@ export const handler = (data, context, db, web3, messaging) => {
             drink = boughtDrink
             console.log(drink)
             return batch.update(fromUserRef, {
-                conversations: { ...(docData.conversations ? docData.conversations : []), [conversationId]: {
+                conversations: { ...(fromUserData.conversations ? fromUserData.conversations : []), [conversationId]: {
                     id: conversationId,
                     sender: fromUid,
                     receiver: toUid,
@@ -82,7 +66,7 @@ export const handler = (data, context, db, web3, messaging) => {
                     drinkImage: drink.imageUrl,
                     drinkName: drink.name,
                     seen: false,
-                    lastUpdated: new Date().getTime(),
+                    lastUpdated: new Date().getTime()/1000,
                 } },
             });
         })
@@ -97,11 +81,13 @@ export const handler = (data, context, db, web3, messaging) => {
                         sender: fromUid,
                         receiver: toUid,
                         accepted: false,
+                        seen: false,
                         text: data.text,
                         drinkId: drink.id,
                         drinkPrice: drink.price,
                         drinkImage: drink.imageUrl,
-                        drinkName: drink.name
+                        drinkName: drink.name,
+                        lastUpdated: new Date().getTime()/1000
                     } },
                 });
             })
@@ -112,19 +98,32 @@ export const handler = (data, context, db, web3, messaging) => {
             const message = {
                 sender: fromUid,
                 receiver: toUid,
+                seen: false,
                 text: data.text,
                 drinkId: drink.id,
                 date: new Date().getTime()/1000,
+                lastUpdated: new Date().getTime()/1000
             };
 
             const newMessageDoc = db.collection(`conversations/${conversationId}/messages`).doc()
             return batch.set(newMessageDoc, message)
         })
 
-        // send notification to receiver about new message)
+        // send notification to receiver about chat request
         .then(() => toUserRef.get()
             .then(doc => {
+                // prepare message notification payload
+                const payload = {
+                    notification: {
+                        title: 'New chat request from ' + fromUserData.fullname,
+                        from: fromUid,
+                        body: util.truncateMessage(data.text),
+                        badge: '1',
+                        conversationId: conversationId
+                    }
+                }
                 const toUserData = doc.data();
+                console.log(`message: ${payload.notification.body} to token: ${toUserData.token}`)
                 return messaging.sendToDevice(toUserData.token, payload)
             })
         )

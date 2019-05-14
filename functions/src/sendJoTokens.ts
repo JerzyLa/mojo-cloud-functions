@@ -21,6 +21,7 @@ export const handler = async (data, context, db, web3) => {
     const jotokenAddress = process.env.JOTOKEN_ADDRESS
     const relayer = process.env.RELAYER_ADDRESS
     const relayerPrivKey = process.env.RELAYER_PRIVATE_KEY
+    console.log(`send from uid: ${context.auth.uid} to addr: ${data.to} value: ${data.value}`)
 
     try {
         const receipt = await transferTokens(db, web3, {
@@ -31,6 +32,16 @@ export const handler = async (data, context, db, web3) => {
             relayer: relayer,
             relayerPrivKey: relayerPrivKey
         })
+
+        const txRef = await db.collection("transactions").add({
+            fromUid: context.auth.uid,
+            toAddr: data.to,
+            value: data.value/1e18,
+            status: "done",
+            type: "token transfer",
+            date: new Date().getTime()/1000,
+        })
+        await txRef.update({id: txRef.id})
 
         return receipt.transactionHash
     }
