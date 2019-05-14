@@ -22,7 +22,8 @@ export const handler = async (messaging, web3, db, change) => {
         const payload = {
             notification: {
                 title: "High rating reward",
-                body: "Congratulations you get a reward for high rating!"
+                body: "Congratulations you get a reward for high rating!",
+                categoryId: 'highRating',
             }
         }
 

@@ -40,6 +40,7 @@ export const handler = (snapshot, context, db, messaging) => {
                         body: util.truncateMessage(messageData.text),
                         badge: '1',
                         conversationId: convId,
+                        categoryId: 'onMessageCreate',
                     }
                 }
                 // for first message do not send message

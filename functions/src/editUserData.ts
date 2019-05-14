@@ -1,5 +1,4 @@
 import * as functions from 'firebase-functions';
-import * as sendJoTokens from './sendJoTokens';
 import { transferTokens } from './transferTokens'
 
 /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Needs to be secured (data validation) on production stage !!!!!!!!!!!!!!!!!!*/

@@ -70,7 +70,7 @@ exports.sendJoTokens = functions.https.onCall((data, context) => {
 })
 
 exports.sendDrink = functions.https.onCall((data, context) => {
-    return sendDrink.handler(data, context, db)
+    return sendDrink.handler(data, context, db, messaging)
 })
 
 exports.getBalance = functions.https.onCall(
@@ -82,6 +82,10 @@ exports.buyDrink = functions.https.onCall((data, context) => {
 })
 
 exports.getUsers = functions.https.onCall((data, context) => {
+    return getUsers.handler(data, context, db)
+})
+
+exports.getUsersDev = functions.https.onCall((data, context) => {
     return getUsers.handler(data, context, db)
 })
 

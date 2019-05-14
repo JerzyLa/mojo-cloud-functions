@@ -51,6 +51,7 @@ export const handler = async (data, context, db, web3) => {
             isSent: false,
             owner: context.auth.uid,
             sentTo: '',
+            sender: '',
             typeid: drinkTypeDoc.data().id
         })
         await docRef.update({id: docRef.id})

@@ -20,7 +20,7 @@ export const handler = async (snapshot, context, db, web3) => {
     await transferTokens(db, web3, {
         uid: data.fromUid,
         to: data.toAddr,
-        value: data.value,
+        value: data.value * 1e18,
         jotokenAddress: jotokenAddress,
         relayer: relayer,
         relayerPrivKey: relayerPrivKey

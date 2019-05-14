@@ -1,5 +1,3 @@
-import * as functions from 'firebase-functions';
-
 // Handler for getOpenedConversations function
 // data - {} (optional)
 // context - Firebase https.onCall Context

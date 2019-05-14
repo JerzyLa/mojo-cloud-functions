@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
+// tslint:disable:no-shadowed-variable
 
-const filterUsers = (querySnapshot, minYear, maxYear, genderPreference) => {
+const filterUsers = (querySnapshot, minYear, maxYear, genderPreference, user) => {
     let users = [];
     querySnapshot
         .forEach(user => {
@@ -9,6 +10,11 @@ const filterUsers = (querySnapshot, minYear, maxYear, genderPreference) => {
                 user.data(),
             ];
         });
+    const usersAlreadyInChat = user.conversations ? Object.keys(user.conversations)
+        .map(key => user.conversations[key])
+        .filter(conversation => conversation.sender === user.uid || 
+            (conversation.receiver === user.uid && conversation.accepted === true))
+        .map(conversation => conversation.sender === user.uid ? conversation.receiver : conversation.sender) : [];
     const usersFound = users
         .map(user => ({
             uid: user.uid,
@@ -35,6 +41,7 @@ const filterUsers = (querySnapshot, minYear, maxYear, genderPreference) => {
         .filter(user => user.age >= minYear)
         .filter(user => user.age <= maxYear)
         .filter(user => genderPreference === 'All' ? user : user.gender === genderPreference)
+        .filter(user => usersAlreadyInChat.indexOf(user.uid) === -1)
         .sort((a, b) => {
             if (a.fullname < b.fullname) { return -1; }
             if (a.fullname > b.fullname) { return 1; }
@@ -58,8 +65,13 @@ export const handler = (data, context, db) => {
         throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
             'while authenticated.');
     }
+    // if(data.password !== 'TestPass123') {
+    //     throw new functions.https.HttpsError('failed-precondition', 'The function must be called ' +
+    //          'while authenticated.');
+    // }
 
     const userRef = db.collection('users').doc(context.auth.uid);
+    // const userRef = db.collection('users').doc(data.uid);
     return userRef.get()
         .then(doc => {
             const currentUser = doc.data();
@@ -70,21 +82,21 @@ export const handler = (data, context, db) => {
             if (data && data.insideHouse === true) {
                 return db.collection("users").where("insideHouse", "==", true)
                     .get()
-                    .then((querySnapshot) => filterUsers(querySnapshot, minYear, maxYear, genderPreference))
+                    .then((querySnapshot) => filterUsers(querySnapshot, minYear, maxYear, genderPreference, currentUser))
                     .catch(function (error) {
                         console.log("Error getting documents: ", error);
                     });
             } else if (data && data.insideHouse === false) {
                 return db.collection("users").where("insideHouse", "==", false)
                     .get()
-                    .then((querySnapshot) => filterUsers(querySnapshot, minYear, maxYear, genderPreference))
+                    .then((querySnapshot) => filterUsers(querySnapshot, minYear, maxYear, genderPreference, currentUser))
                     .catch(function (error) {
                         console.log("Error getting documents: ", error);
                     });
             } else {
                 return db.collection("users")
                     .get()
-                    .then((querySnapshot) => filterUsers(querySnapshot, minYear, maxYear, genderPreference))
+                    .then((querySnapshot) => filterUsers(querySnapshot, minYear, maxYear, genderPreference, currentUser))
                     .catch(function (error) {
                         console.log("Error getting documents: ", error);
                     });

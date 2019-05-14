@@ -36,6 +36,7 @@ export const buyDrinkFor = async (db, data) => {
             blocked: true,
             owner: data.uid,
             sentTo: data.receiver,
+            sender: data.uid,
             typeid: drinkTypeDoc.data().id,
             imageUrl: drinkTypeDoc.data().imageUrl,
             name: drinkTypeDoc.data().name
