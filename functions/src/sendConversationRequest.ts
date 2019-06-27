@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions'
 import * as util from './util'
 import { buyDrinkFor } from './buyDrinkFor'
+import { acceptRequest } from './onMessageCreate';
 
 // Handler for sendConversationRequest function
 // data - { uid: string, text: string, drinktypeid: string }
@@ -61,7 +62,7 @@ export const handler = (data, context, db, messaging) => {
                         id: conversationId,
                         sender: fromUid,
                         receiver: toUid,
-                        accepted: false,
+                        accepted: true,
                         text: data.text,
                         drinkId: drink.id,
                         drinkPrice: drink.price,
@@ -84,7 +85,7 @@ export const handler = (data, context, db, messaging) => {
                             id: conversationId,
                             sender: fromUid,
                             receiver: toUid,
-                            accepted: false,
+                            accepted: true,
                             seen: false,
                             text: data.text,
                             drinkId: drink.id,
@@ -134,6 +135,7 @@ export const handler = (data, context, db, messaging) => {
             console.log("Successfully sent message:", response);
         })
         .then(() => batch.commit())
+        .then(() => acceptRequest(fromUid, toUid, conversationId, db))
 
         // catch error if any happens
         .catch(error => {

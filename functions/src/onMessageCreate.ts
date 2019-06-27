@@ -1,7 +1,5 @@
 import * as util from './util'
 
-let acceptRequest
-
 export const handler = (snapshot, context, db, messaging) => {
     const convId = context.params.conversationId
     const messageId = context.params.messageId
@@ -22,32 +20,37 @@ export const handler = (snapshot, context, db, messaging) => {
         .then(doc => {
             fromUserData = doc.data();
             const requestSender = fromUserData.conversations[convId].sender
-            if (requestSender !== sender && fromUserData.conversations[convId].accepted === false) {
-                console.log('request is accepted')
-                return acceptRequest(sender, receiver, convId, db)
-            }
+            // if (requestSender !== sender && fromUserData.conversations[convId].accepted === false) {
+            //     console.log('request is accepted')
+            //     return acceptRequest(sender, receiver, convId, db)
+            // }
             
             console.log('it is not message which accepts request')
         })
         
         // send notification message
         .then(() => receiverRef.get()
-            .then(doc => {
-                const payload = {
-                    notification: {
-                        title: 'New message from ' + fromUserData.fullname,
-                        from: sender,
-                        body: util.truncateMessage(messageData.text),
-                        badge: '1',
-                        conversationId: convId,
-                        categoryId: 'onMessageCreate',
+            .then(async (doc) => {
+                const messagesDoc = await db.collection('conversations').doc(convId).collection('messages').get();
+                const messagesData = messagesDoc.data();
+                console.log('messages found: ', messagesData);
+                if (messagesData.length > 1) {
+                    const payload = {
+                        notification: {
+                            title: 'New message from ' + fromUserData.fullname,
+                            from: sender,
+                            body: util.truncateMessage(messageData.text),
+                            badge: '1',
+                            conversationId: convId,
+                            categoryId: 'onMessageCreate',
+                        }
                     }
-                }
-                // for first message do not send message
-                if (messageData.drinkId === undefined) {
-                    const toUserData = doc.data();
-                    console.log(`message: ${messageData.text} to token: ${toUserData.token}`)
-                    return messaging.sendToDevice(toUserData.token, payload)
+                    // for first message do not send message
+                    if (messageData.drinkId === undefined) {
+                        const toUserData = doc.data();
+                        console.log(`message: ${messageData.text} to token: ${toUserData.token}`)
+                        return messaging.sendToDevice(toUserData.token, payload)
+                    }
                 }
             })
         )
@@ -59,7 +62,7 @@ export const handler = (snapshot, context, db, messaging) => {
         })
 }
 
-acceptRequest = (fromUserId, toUserId, conversationId, db) => {
+export const acceptRequest = (fromUserId, toUserId, conversationId, db) => {
     const fromUserRef = db.collection('users').doc(fromUserId);
     const toUserRef = db.collection('users').doc(toUserId);
     let drinkid
